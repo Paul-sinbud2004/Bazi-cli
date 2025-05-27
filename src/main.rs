@@ -1,0 +1,428 @@
+use colored::{Color, Colorize};
+use lunar_rust::eight_char::EightCharRefHelper;
+use lunar_rust::lunar::LunarRefHelper;
+use lunar_rust::solar::{self, SolarRefHelper};
+use regex::Regex;
+use unicode_width::UnicodeWidthChar;
+
+#[allow(non_snake_case)]
+struct BaZi {
+    // 年柱信息
+    NG: String,        //年干
+    NZ: String,        //年支
+    NCG: Vec<String>,  //年藏干
+    NWX: String,       //年五行
+    NNY: String,       //年纳音
+    NGSS: String,      //年干十神
+    NZSS: Vec<String>, //年支十神
+    NDS: String,       //年地势(十二长生)
+    NX: String,        //年旬
+    NK: String,        //年空
+
+    // 月柱信息
+    YG: String,        //月干
+    YZ: String,        //月支
+    YCG: Vec<String>,  //月藏干
+    YWX: String,       //月五行
+    YNY: String,       //月纳音
+    YGSS: String,      //月干十神
+    YZSS: Vec<String>, //月支十神
+    YDS: String,       //月地势
+    YX: String,        //月旬
+    YK: String,        //月空
+
+    // 日柱信息
+    RG: String,        //日干
+    RZ: String,        //日支
+    RCG: Vec<String>,  //日藏干
+    RWX: String,       //日五行
+    RNY: String,       //日纳音
+    RGSS: String,      //日干十神
+    RZSS: Vec<String>, //日支十神
+    RDS: String,       //日地势
+    RX: String,        //日旬
+    RK: String,        //日空
+
+    // 时柱信息
+    SG: String,        //时干
+    SZ: String,        //时支
+    SCG: Vec<String>,  //时藏干
+    SWX: String,       //时五行
+    SNY: String,       //时纳音
+    SGSS: String,      //时干十神
+    SZSS: Vec<String>, //时支十神
+    SDS: String,       //时地势
+    SX: String,        //时旬
+    SK: String,        //时空
+
+    // 其他信息
+    TY: String,    //胎元
+    TYNY: String,  //胎元纳音
+    TX: String,    //胎息
+    TXNY: String,  //胎息纳音
+    MG: String,    //命宫
+    MGNY: String,  //命宫纳音
+    SNG: String,   //身宫
+    SNGNY: String, //身宫纳音
+}
+
+impl BaZi {
+    fn new(eight_char: &dyn EightCharRefHelper) -> Self {
+        Self {
+            // 年柱
+            NG: eight_char.get_year_gan().to_string(),
+            NZ: eight_char.get_year_zhi().to_string(),
+            NCG: eight_char.get_year_hide_gan(),
+            NWX: eight_char.get_year_wu_xing().to_string(),
+            NNY: eight_char.get_year_na_yin().to_string(),
+            NGSS: eight_char.get_year_shi_shen_gan().to_string(),
+            NZSS: eight_char.get_year_shi_shen_zhi(),
+            NDS: eight_char.get_year_di_shi().to_string(),
+            NX: eight_char.get_year_xun().to_string(),
+            NK: eight_char.get_year_xun_kong().to_string(),
+
+            // 月柱
+            YG: eight_char.get_month_gan().to_string(),
+            YZ: eight_char.get_month_zhi().to_string(),
+            YCG: eight_char.get_month_hide_gan(),
+            YWX: eight_char.get_month_wu_xing().to_string(),
+            YNY: eight_char.get_month_na_yin().to_string(),
+            YGSS: eight_char.get_month_shi_shen_gan().to_string(),
+            YZSS: eight_char.get_month_shi_shen_zhi(),
+            YDS: eight_char.get_month_di_shi().to_string(),
+            YX: eight_char.get_month_xun().to_string(),
+            YK: eight_char.get_month_xun_kong().to_string(),
+
+            // 日柱
+            RG: eight_char.get_day_gan().to_string(),
+            RZ: eight_char.get_day_zhi().to_string(),
+            RCG: eight_char.get_day_hide_gan(),
+            RWX: eight_char.get_day_wu_xing().to_string(),
+            RNY: eight_char.get_day_na_yin().to_string(),
+            RGSS: eight_char.get_day_shi_shen_gan().to_string(),
+            RZSS: eight_char.get_day_shi_shen_zhi(),
+            RDS: eight_char.get_day_di_shi().to_string(),
+            RX: eight_char.get_day_xun().to_string(),
+            RK: eight_char.get_day_xun_kong().to_string(),
+
+            // 时柱
+            SG: eight_char.get_time_gan().to_string(),
+            SZ: eight_char.get_time_zhi().to_string(),
+            SCG: eight_char.get_time_hide_gan(),
+            SWX: eight_char.get_time_wu_xing().to_string(),
+            SNY: eight_char.get_time_na_yin().to_string(),
+            SGSS: eight_char.get_time_shi_shen_gan().to_string(),
+            SZSS: eight_char.get_time_shi_shen_zhi(),
+            SDS: eight_char.get_time_di_shi().to_string(),
+            SX: eight_char.get_time_xun().to_string(),
+            SK: eight_char.get_time_xun_kong().to_string(),
+
+            // 其他
+            TY: eight_char.get_tai_yuan().to_string(),
+            TYNY: eight_char.get_tai_yuan_na_yin().to_string(),
+            TX: eight_char.get_tai_xi().to_string(),
+            TXNY: eight_char.get_tai_xi_na_yin().to_string(),
+            MG: eight_char.get_ming_gong().to_string(),
+            MGNY: eight_char.get_ming_gong_na_yin().to_string(),
+            SNG: eight_char.get_shen_gong().to_string(),
+            SNGNY: eight_char.get_shen_gong_na_yin().to_string(),
+        }
+    }
+
+    fn print(
+        &self,
+        name: &str,
+        sex: &str,
+        solar: &impl SolarRefHelper,
+        lunar: &impl LunarRefHelper,
+    ) {
+        // 颜色映射函数
+        let get_gan_color = |gan: &str| -> Color {
+            match gan {
+                "甲" | "乙" => Color::Green,
+                "丙" | "丁" => Color::Red,
+                "戊" | "己" => Color::Yellow,
+                "庚" | "辛" => Color::White,
+                "壬" | "癸" => Color::Blue,
+                _ => Color::White,
+            }
+        };
+
+        let get_zhi_color = |zhi: &str| -> Color {
+            match zhi {
+                "寅" | "卯" => Color::Green,
+                "巳" | "午" => Color::Red,
+                "辰" | "戌" | "丑" | "未" => Color::Yellow,
+                "申" | "酉" => Color::White,
+                "亥" | "子" => Color::Blue,
+                _ => Color::White,
+            }
+        };
+
+        // 带颜色格式化的干支
+        let fmt_ganzhi = |gan: &str, zhi: &str| -> String {
+            format!(
+                "{}{}",
+                gan.color(get_gan_color(gan)),
+                zhi.color(get_zhi_color(zhi))
+            )
+        };
+
+        // 计算字符串显示宽度（排除ANSI颜色代码）
+        fn display_width(s: &str) -> usize {
+            let ansi_re = Regex::new(r"\x1B\[[0-9;]*[mK]").unwrap();
+            ansi_re.replace_all(s, "").chars().fold(0, |acc, c| {
+                acc + unicode_width::UnicodeWidthChar::width_cjk(c).unwrap_or(1)
+                // 改为CJK宽度
+            })
+        }
+
+        // 固定显示宽度（优化处理，确保不截断内容）
+        fn fixed_width(s: &str, width: usize) -> String {
+            let mut result = String::new();
+            let mut current_width = 0;
+            let mut ansi_stack = Vec::new();
+            let ansi_re = Regex::new(r"\x1B\[[0-9;]*m").unwrap();
+
+            // 处理ANSI状态机
+            let mut chars = s.chars().peekable();
+            while let Some(c) = chars.next() {
+                if c == '\x1B' {
+                    let mut code = String::from(c);
+                    while let Some(&next) = chars.peek() {
+                        code.push(next);
+                        chars.next();
+                        if next == 'm' {
+                            break;
+                        }
+                    }
+                    if ansi_re.is_match(&code) {
+                        ansi_stack.push(code.clone());
+                        result.push_str(&code);
+                    }
+                    continue;
+                }
+
+                let char_width = UnicodeWidthChar::width_cjk(c).unwrap_or(1);
+                if current_width + char_width > width {
+                    if current_width < width {
+                        result.push('…');
+                        current_width += 1;
+                    }
+                    break;
+                }
+
+                result.push(c);
+                current_width += char_width;
+            }
+
+            // 补齐宽度
+            if current_width < width {
+                result.push_str(&" ".repeat(width - current_width));
+            }
+
+            // 恢复ANSI状态
+            if !ansi_stack.is_empty() {
+                result.push_str("\x1B[0m");
+                result.push_str(&ansi_stack.last().unwrap());
+            }
+
+            result
+        }
+
+        // 表格边框字符
+        let border = |s: &str| s.bright_black().bold();
+
+        println!(
+        "\n{}",
+        border("--------------------------------------八字排盘--------------------------------------")
+    );
+
+        // 基本信息
+        println!(
+            "{}{}{}{}",
+            border(" "),
+            fixed_width(&format!("姓名：{}", name.bright_yellow()), 20),
+            fixed_width(&format!("性别：{}", sex.bright_magenta()), 20),
+            format!("公历：{}", solar.to_ymdhms().bright_white())
+        );
+
+        println!(
+            "{}{}{}{}\n{}",
+            border(" "),
+            fixed_width(
+                &format!("农历：{}", lunar.get_year_in_gan_zhi().bright_cyan()),
+                20
+            ),
+            lunar.to_string().bright_white(),
+            border(" "),
+            border(" ")
+        );
+
+        // 列标题
+        println!(
+            "{} {} {} {} {} {} {}",
+            border(" "),
+            fixed_width("四柱", 12).bright_white().bold(),
+            fixed_width("年柱", 15).bright_white().bold(),
+            fixed_width("月柱", 15).bright_white().bold(),
+            fixed_width("日柱", 15).bright_white().bold(),
+            fixed_width("时柱", 15).bright_white().bold(),
+            border(" ")
+        );
+
+        println!("{}", border(""));
+
+        // 自定义行打印函数
+        let print_row = |label: &str, data: [&str; 4]| {
+            print!("{} {}", border(" "), fixed_width(label, 12).bright_white());
+            for d in data {
+                print!(" {} {} ", fixed_width(d, 12), border(" ")); // 增加列宽到12
+            }
+            println!();
+        };
+
+        // 天干地支显示
+        print_row(
+            "干支",
+            [
+                &fmt_ganzhi(&self.NG, &self.NZ),
+                &fmt_ganzhi(&self.YG, &self.YZ),
+                &format!("{}（日元）", fmt_ganzhi(&self.RG, &self.RZ)),
+                &fmt_ganzhi(&self.SG, &self.SZ),
+            ],
+        );
+
+        // 十神显示（优化分隔符处理）
+        let shishen_display: [String; 4] = [
+            format!("{}/{}", self.NGSS, self.NZSS.join("/")),
+            format!("{}/{}", self.YGSS, self.YZSS.join("/")),
+            format!("{}/{}（主）", self.RGSS, self.RZSS.join("/")),
+            format!("{}/{}", self.SGSS, self.SZSS.join("/")),
+        ]
+        .map(|s| {
+            s.split('/')
+                .map(|part| {
+                    part.trim()
+                        .color(match part.trim() {
+                            "比肩" => Color::Green,
+                            "劫财" => Color::Green,
+                            "食神" => Color::Yellow,
+                            "伤官" => Color::Yellow,
+                            "正财" => Color::Blue,
+                            "偏财" => Color::Blue,
+                            "正官" => Color::Magenta,
+                            "七杀" => Color::Magenta,
+                            "正印" => Color::Cyan,
+                            "偏印" => Color::Cyan,
+                            _ => Color::White,
+                        })
+                        .to_string()
+                })
+                .collect::<Vec<String>>()
+                .join(" , ") // 使用空格分隔斜杠，提高可读性
+        });
+
+        let shishen_refs: [&str; 4] = [
+            &shishen_display[0],
+            &shishen_display[1],
+            &shishen_display[2],
+            &shishen_display[3],
+        ];
+        print_row("十神", shishen_refs);
+
+        // 五行纳音（确保不截断）
+        let wuxing_display: [String; 4] = [
+            format!("{}[{}]", self.NWX, self.NNY),
+            format!("{}[{}]", self.YWX, self.YNY),
+            format!("{}[{}]", self.RWX, self.RNY),
+            format!("{}[{}]", self.SWX, self.SNY),
+        ]
+        .map(|s| {
+            let (wuxing, nayin) = s.split_at(s.find('[').unwrap());
+            format!(
+                "{}{}",
+                wuxing.color(match wuxing {
+                    "木" => Color::Green,
+                    "火" => Color::Red,
+                    "土" => Color::Yellow,
+                    "金" => Color::White,
+                    "水" => Color::Blue,
+                    _ => Color::White,
+                }),
+                nayin.bright_yellow()
+            )
+        });
+
+        let wuxing_refs: [&str; 4] = [
+            &wuxing_display[0],
+            &wuxing_display[1],
+            &wuxing_display[2],
+            &wuxing_display[3],
+        ];
+        print_row("五行/纳音", wuxing_refs);
+
+        // 辅助信息
+        println!("{}", border(""));
+        println!(
+            "{} {}",
+            border(" "),
+            format!(
+                "胎元：{} 命宫：{} 身宫：{}",
+                self.TY.bright_green(),
+                self.MG.bright_magenta(),
+                self.SNG.bright_cyan()
+            )
+            .bright_white()
+        );
+        println!(
+            "{} {}",
+            border(" "),
+            format!(
+                "纳音：{} 岁次：{}",
+                self.MGNY.bright_yellow(),
+                lunar.get_year_in_gan_zhi().bright_blue()
+            )
+            .bright_white()
+        );
+        println!(
+        "{}",
+        border("--------------------------------------排盘程序--------------------------------------")
+    );
+    }
+}
+
+fn get_wuxing_color(wuxing: &str) -> Color {
+    match wuxing {
+        s if s.contains('木') => Color::BrightGreen,
+        s if s.contains('火') => Color::Red,
+        s if s.contains('土') => Color::Yellow,
+        s if s.contains('金') => Color::White,
+        s if s.contains('水') => Color::Blue,
+        _ => Color::White,
+    }
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 7 {
+        eprintln!("用法：{} 姓名 性别 年 月 日 时", args[0]);
+        eprintln!("示例：{} 张三 男 2025 3 4 17", args[0]);
+        std::process::exit(1);
+    }
+
+    let name = &args[1];
+    let sex = &args[2];
+    let year = args[3].parse::<i64>().unwrap_or(2023);
+    let month = args[4].parse::<i64>().unwrap_or(1);
+    let day = args[5].parse::<i64>().unwrap_or(1);
+    let hour = args[6].parse::<i64>().unwrap_or(0);
+
+    let solar = solar::from_ymdhms(year, month, day, hour, 0, 0);
+    let lunar = solar.get_lunar();
+    let eight_char = lunar.get_eight_char();
+    let eight_char_ref = &eight_char;
+
+    let bazi = BaZi::new(eight_char_ref);
+    bazi.print(name, sex, &solar, &lunar);
+}

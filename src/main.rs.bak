@@ -1,0 +1,368 @@
+use colored::{Color, Colorize};
+use lunar_rust::eight_char::EightCharRefHelper;
+use lunar_rust::lunar::LunarRefHelper;
+use lunar_rust::solar::{self, SolarRefHelper};
+use unicode_width::UnicodeWidthStr;
+
+#[allow(non_snake_case)]
+struct BaZi {
+    // 年柱信息
+    NG: String,        //年干
+    NZ: String,        //年支
+    NCG: Vec<String>,  //年藏干
+    NWX: String,       //年五行
+    NNY: String,       //年纳音
+    NGSS: String,      //年干十神
+    NZSS: Vec<String>, //年支十神
+    NDS: String,       //年地势(十二长生)
+    NX: String,        //年旬
+    NK: String,        //年空
+
+    // 月柱信息
+    YG: String,        //月干
+    YZ: String,        //月支
+    YCG: Vec<String>,  //月藏干
+    YWX: String,       //月五行
+    YNY: String,       //月纳音
+    YGSS: String,      //月干十神
+    YZSS: Vec<String>, //月支十神
+    YDS: String,       //月地势
+    YX: String,        //月旬
+    YK: String,        //月空
+
+    // 日柱信息
+    RG: String,        //日干
+    RZ: String,        //日支
+    RCG: Vec<String>,  //日藏干
+    RWX: String,       //日五行
+    RNY: String,       //日纳音
+    RGSS: String,      //日干十神
+    RZSS: Vec<String>, //日支十神
+    RDS: String,       //日地势
+    RX: String,        //日旬
+    RK: String,        //日空
+
+    // 时柱信息
+    SG: String,        //时干
+    SZ: String,        //时支
+    SCG: Vec<String>,  //时藏干
+    SWX: String,       //时五行
+    SNY: String,       //时纳音
+    SGSS: String,      //时干十神
+    SZSS: Vec<String>, //时支十神
+    SDS: String,       //时地势
+    SX: String,        //时旬
+    SK: String,        //时空
+
+    // 其他信息
+    TY: String,    //胎元
+    TYNY: String,  //胎元纳音
+    TX: String,    //胎息
+    TXNY: String,  //胎息纳音
+    MG: String,    //命宫
+    MGNY: String,  //命宫纳音
+    SNG: String,   //身宫
+    SNGNY: String, //身宫纳音
+}
+
+impl BaZi {
+    fn new(eight_char: &dyn EightCharRefHelper) -> Self {
+        Self {
+            // 年柱
+            NG: eight_char.get_year_gan().to_string(),
+            NZ: eight_char.get_year_zhi().to_string(),
+            NCG: eight_char.get_year_hide_gan(),
+            NWX: eight_char.get_year_wu_xing().to_string(),
+            NNY: eight_char.get_year_na_yin().to_string(),
+            NGSS: eight_char.get_year_shi_shen_gan().to_string(),
+            NZSS: eight_char.get_year_shi_shen_zhi(),
+            NDS: eight_char.get_year_di_shi().to_string(),
+            NX: eight_char.get_year_xun().to_string(),
+            NK: eight_char.get_year_xun_kong().to_string(),
+
+            // 月柱
+            YG: eight_char.get_month_gan().to_string(),
+            YZ: eight_char.get_month_zhi().to_string(),
+            YCG: eight_char.get_month_hide_gan(),
+            YWX: eight_char.get_month_wu_xing().to_string(),
+            YNY: eight_char.get_month_na_yin().to_string(),
+            YGSS: eight_char.get_month_shi_shen_gan().to_string(),
+            YZSS: eight_char.get_month_shi_shen_zhi(),
+            YDS: eight_char.get_month_di_shi().to_string(),
+            YX: eight_char.get_month_xun().to_string(),
+            YK: eight_char.get_month_xun_kong().to_string(),
+
+            // 日柱
+            RG: eight_char.get_day_gan().to_string(),
+            RZ: eight_char.get_day_zhi().to_string(),
+            RCG: eight_char.get_day_hide_gan(),
+            RWX: eight_char.get_day_wu_xing().to_string(),
+            RNY: eight_char.get_day_na_yin().to_string(),
+            RGSS: eight_char.get_day_shi_shen_gan().to_string(),
+            RZSS: eight_char.get_day_shi_shen_zhi(),
+            RDS: eight_char.get_day_di_shi().to_string(),
+            RX: eight_char.get_day_xun().to_string(),
+            RK: eight_char.get_day_xun_kong().to_string(),
+
+            // 时柱
+            SG: eight_char.get_time_gan().to_string(),
+            SZ: eight_char.get_time_zhi().to_string(),
+            SCG: eight_char.get_time_hide_gan(),
+            SWX: eight_char.get_time_wu_xing().to_string(),
+            SNY: eight_char.get_time_na_yin().to_string(),
+            SGSS: eight_char.get_time_shi_shen_gan().to_string(),
+            SZSS: eight_char.get_time_shi_shen_zhi(),
+            SDS: eight_char.get_time_di_shi().to_string(),
+            SX: eight_char.get_time_xun().to_string(),
+            SK: eight_char.get_time_xun_kong().to_string(),
+
+            // 其他
+            TY: eight_char.get_tai_yuan().to_string(),
+            TYNY: eight_char.get_tai_yuan_na_yin().to_string(),
+            TX: eight_char.get_tai_xi().to_string(),
+            TXNY: eight_char.get_tai_xi_na_yin().to_string(),
+            MG: eight_char.get_ming_gong().to_string(),
+            MGNY: eight_char.get_ming_gong_na_yin().to_string(),
+            SNG: eight_char.get_shen_gong().to_string(),
+            SNGNY: eight_char.get_shen_gong_na_yin().to_string(),
+        }
+    }
+
+    fn print(
+        &self,
+        name: &str,
+        sex: &str,
+        solar: &impl SolarRefHelper,
+        lunar: &impl LunarRefHelper,
+    ) {
+        // 颜色映射函数
+        let get_gan_color = |gan: &str| -> Color {
+            match gan {
+                "甲" | "乙" => Color::BrightGreen,  // 木
+                "丙" | "丁" => Color::BrightRed,    // 火
+                "戊" | "己" => Color::BrightYellow, // 土
+                "庚" | "辛" => Color::BrightWhite,  // 金
+                "壬" | "癸" => Color::BrightBlue,   // 水
+                _ => Color::White,
+            }
+        };
+
+        let get_zhi_color = |zhi: &str| -> Color {
+            match zhi {
+                "寅" | "卯" => Color::BrightGreen,                // 木
+                "巳" | "午" => Color::BrightRed,                  // 火
+                "辰" | "戌" | "丑" | "未" => Color::BrightYellow, // 土
+                "申" | "酉" => Color::BrightWhite,                // 金
+                "亥" | "子" => Color::BrightBlue,                 // 水
+                _ => Color::White,
+            }
+        };
+
+        // 带颜色格式化的干支
+        let fmt_ganzhi = |gan: &str, zhi: &str| -> String {
+            format!(
+                "{}{}",
+                gan.color(get_gan_color(gan)).to_string(),
+                zhi.color(get_zhi_color(zhi)).to_string()
+            )
+        };
+
+        // 统一列宽处理（中文对齐）
+        let fixed_width = |s: &str, width: usize| -> String {
+            let ch_width = UnicodeWidthStr::width(s);
+            if ch_width >= width {
+                s.to_string()
+            } else {
+                format!("{}{}", s, " ".repeat(width - ch_width))
+            }
+        };
+
+        println!(
+            "\n{}",
+            "┌────────────────── 八字排盘 ──────────────────┐".bright_cyan()
+        );
+
+        // 基本信息
+        println!(
+            "{} {} {}",
+            fixed_width(&format!("姓名：{}", name.bright_yellow()), 18),
+            fixed_width(&format!("性别：{}", sex.bright_magenta()), 18),
+            format!("公历：{}", solar.to_ymdhms().bright_white())
+        );
+
+        println!(
+            "{} {}\n{}",
+            fixed_width(
+                &format!("农历：{}", lunar.get_year_in_gan_zhi().bright_cyan()),
+                18
+            ),
+            lunar.to_string().bright_white(),
+            "├────────────────┬────────────┬────────────┬────────────┤".bright_black()
+        );
+
+        // 列标题
+        println!(
+            "{} {} {} {} {} {} {}",
+            "│".bright_black(),
+            fixed_width("　四柱属性　".bright_white().to_string().as_str(), 16).bright_black(),
+            fixed_width("　　年柱　　".bright_white().to_string().as_str(), 12),
+            fixed_width("　　月柱　　".bright_white().to_string().as_str(), 12),
+            fixed_width("　　日柱　　".bright_white().to_string().as_str(), 12),
+            fixed_width("　　时柱　　".bright_white().to_string().as_str(), 12),
+            "│".bright_black()
+        );
+
+        println!(
+            "{}",
+            "├────────────────┼────────────┼────────────┼────────────┤".bright_black()
+        );
+
+        // 天干地支行
+        let print_row = |label: &str, data: [&str; 4]| {
+            print!(
+                "{} {}",
+                "│".bright_black(),
+                fixed_width(&format!("{}", label.bright_white()), 16).bright_black()
+            );
+            for d in data {
+                print!(" {} {}", fixed_width(d, 10), "│".bright_black());
+            }
+            println!();
+        };
+
+        // 天干地支显示
+        print_row(
+            "干支",
+            [
+                &fmt_ganzhi(&self.NG, &self.NZ),
+                &fmt_ganzhi(&self.YG, &self.YZ),
+                &format!(
+                    "{}{}（日元）",
+                    self.RG.color(get_gan_color(&self.RG)),
+                    self.RZ.color(get_zhi_color(&self.RZ))
+                ),
+                &fmt_ganzhi(&self.SG, &self.SZ),
+            ],
+        );
+
+        // 十神显示
+        print_row(
+            "十神",
+            [
+                &format!(
+                    "{}/{}",
+                    self.NGSS.color(Color::BrightMagenta),
+                    self.NZSS.join("/").color(Color::BrightCyan)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.YGSS.color(Color::BrightMagenta),
+                    self.YZSS.join("/").color(Color::BrightCyan)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.RGSS.color(Color::BrightRed), // 突出日元
+                    self.RZSS.join("/").color(Color::BrightCyan)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.SGSS.color(Color::BrightMagenta),
+                    self.SZSS.join("/").color(Color::BrightCyan)
+                ),
+            ],
+        );
+
+        // 五行纳音
+        print_row(
+            "五行/纳音",
+            [
+                &format!(
+                    "{}/{}",
+                    self.NWX.color(get_wuxing_color(&self.NWX)),
+                    self.NNY.color(Color::BrightYellow)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.YWX.color(get_wuxing_color(&self.YWX)),
+                    self.YNY.color(Color::BrightYellow)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.RWX.color(get_wuxing_color(&self.RWX)),
+                    self.RNY.color(Color::BrightYellow)
+                ),
+                &format!(
+                    "{}/{}",
+                    self.SWX.color(get_wuxing_color(&self.SWX)),
+                    self.SNY.color(Color::BrightYellow)
+                ),
+            ],
+        );
+
+        // 辅助信息
+        println!(
+            "{}",
+            "├────────────────┴────────────┴────────────┴────────────┤".bright_black()
+        );
+        println!(
+            "{} {}",
+            "│".bright_black(),
+            format!(
+                "胎元：{} 命宫：{} 身宫：{}",
+                self.TY.color(Color::BrightGreen),
+                self.MG.color(Color::BrightMagenta),
+                self.SNG.color(Color::BrightCyan)
+            )
+            .bright_white()
+        );
+        println!(
+            "{} {}",
+            "│".bright_black(),
+            format!(
+                "纳音：{} 岁次：{}",
+                self.MGNY.color(Color::BrightYellow),
+                lunar.get_year_in_gan_zhi().color(Color::BrightBlue)
+            )
+            .bright_white()
+        );
+        println!(
+            "{}",
+            "└───────────────────────────────────────────────────────┘".bright_cyan()
+        );
+    }
+}
+
+fn get_wuxing_color(wuxing: &str) -> Color {
+    match wuxing {
+        s if s.contains('木') => Color::BrightGreen,
+        s if s.contains('火') => Color::Red,
+        s if s.contains('土') => Color::Yellow,
+        s if s.contains('金') => Color::White,
+        s if s.contains('水') => Color::Blue,
+        _ => Color::White,
+    }
+}
+
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() != 7 {
+        eprintln!("用法：{} 姓名 性别 年 月 日 时", args[0]);
+        eprintln!("示例：{} 张三 男 2025 3 4 17", args[0]);
+        std::process::exit(1);
+    }
+
+    let name = &args[1];
+    let sex = &args[2];
+    let year = args[3].parse::<i64>().unwrap_or(2023);
+    let month = args[4].parse::<i64>().unwrap_or(1);
+    let day = args[5].parse::<i64>().unwrap_or(1);
+    let hour = args[6].parse::<i64>().unwrap_or(0);
+
+    let solar = solar::from_ymdhms(year, month, day, hour, 0, 0);
+    let lunar = solar.get_lunar();
+    let eight_char = lunar.get_eight_char();
+    let eight_char_ref = &eight_char;
+
+    let bazi = BaZi::new(eight_char_ref);
+    bazi.print(name, sex, &solar, &lunar);
+}
