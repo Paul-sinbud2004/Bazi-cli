@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 打包产物
+build/
+dist/
+*.spec
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store

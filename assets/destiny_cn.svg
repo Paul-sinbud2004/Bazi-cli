@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- 命理精研图标：宣纸底 + 太极 -->
+  <rect x="4" y="4" width="120" height="120" rx="18" fill="#F5EFDF" stroke="#B08D2E" stroke-width="3"/>
+  <rect x="10" y="10" width="108" height="108" rx="14" fill="none" stroke="#DCCFB0" stroke-width="1.5"/>
+  <circle cx="64" cy="64" r="34" fill="#2B2620"/>
+  <path d="M64 30 a34 34 0 0 1 0 68 a17 17 0 0 1 0 -34 a17 17 0 0 0 0 -34 z" fill="#F5EFDF"/>
+  <circle cx="64" cy="47" r="5.5" fill="#2B2620"/>
+  <circle cx="64" cy="81" r="5.5" fill="#F5EFDF" stroke="#8C3A2B" stroke-width="1"/>
+  <!-- 四角卦画装饰 -->
+  <g stroke="#8C3A2B" stroke-width="4" stroke-linecap="round">
+    <line x1="24" y1="18" x2="40" y2="18"/>
+    <line x1="24" y1="25" x2="40" y2="25"/>
+    <line x1="24" y1="32" x2="40" y2="32"/>
+    <line x1="88" y1="96" x2="104" y2="96"/>
+    <line x1="88" y1="103" x2="104" y2="103"/>
+  </g>
+</svg>

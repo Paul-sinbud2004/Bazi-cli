@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=命理精研
+GenericName=Destiny Cn
+Comment=中国传统命理研习（八字 / 紫微斗数 / 灵签 / 六十四卦）
+Exec=destiny_cn
+Icon=destiny_cn
+Terminal=false
+Categories=Utility;Science;
+Keywords=八字;紫微斗数;灵签;周易;六十四卦;bazi;ziwei;
+StartupWMClass=命理精研
