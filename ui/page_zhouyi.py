@@ -18,6 +18,7 @@ from algorithm import zhouyi
 from algorithm.bazi import get_lunar_info
 from ui import theme
 from ui.widgets import (Card, Divider, GhostButton, MutedLabel, PageTitle, PrimaryButton)
+from utils import records
 from utils.clipboard import copy_text
 
 # 爻位名称（自下而上，与 gua64.json 的 yaoci 顺序一致）
@@ -63,7 +64,8 @@ class ZhouyiPage(QWidget):
         body = self.card.body()
         self.title = QLabel("点击「时间起卦」或「铜钱摇卦」起卦")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title.setStyleSheet(f"font-size: 22px; font-weight: bold; color: {theme.ACCENT};")
+        self.title.setStyleSheet(
+            f"font-size: {theme.fs(22)}px; font-weight: bold; color: {theme.ACCENT};")
         body.addWidget(self.title)
         self.subtitle = MutedLabel("也可从右侧列表选择卦象直接查阅")
         self.subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -71,14 +73,15 @@ class ZhouyiPage(QWidget):
         self.ben = QLabel("")
         self.ben.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ben.setWordWrap(True)
-        self.ben.setStyleSheet(f"font-size: 18px; color: {theme.INK};")
+        self.ben.setStyleSheet(f"font-size: {theme.fs(18)}px; color: {theme.INK};")
         body.addWidget(self.ben)
         self.guaci = MutedLabel("")
         self.guaci.setAlignment(Qt.AlignmentFlag.AlignCenter)
         body.addWidget(self.guaci)
         self.ji = QLabel("")
         self.ji.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.ji.setStyleSheet(f"font-size: 17px; font-weight: bold; color: {theme.WARN};")
+        self.ji.setStyleSheet(
+            f"font-size: {theme.fs(17)}px; font-weight: bold; color: {theme.WARN};")
         body.addWidget(self.ji)
         self.dong = MutedLabel("")
         self.bian = MutedLabel("")
@@ -114,6 +117,7 @@ class ZhouyiPage(QWidget):
         self._result["time_note"] = (f"{now.year}年{now.month}月{now.day}日 "
                                      f"{now.hour:02d}:{now.minute:02d}（农历{lunar_txt}）")
         self._render(self._result)
+        self._save_record()
 
     def coin_cast(self):
         """铜钱摇卦：模拟六次掷钱，展示逐爻结果与动爻。"""
@@ -123,26 +127,56 @@ class ZhouyiPage(QWidget):
             self.title.setText(f"起卦失败：{e}")
             return
         self._render(self._result)
+        self._save_record()
 
     def lookup_gua(self, gua_id: int):
         """直接查卦：不涉及起卦，仅展示卦辞、爻辞与解读。"""
         g = zhouyi.get_gua(gua_id)
         self._result = g
-        self.title.setText(f"{g['symbol']} {g['name']}卦（第 {g['id']} 卦）")
-        self.subtitle.setText("")
-        self.ben.setText(f"上{g['upper']} 下{g['lower']} · 五行属{g['wuxing']}")
-        self.guaci.setText(f"卦辞：{g['guaci']}")
-        self.ji.setText(f"吉凶：{g['ji']}")
-        self.ji.setStyleSheet(f"font-size: 17px; font-weight: bold; {theme.grade_qss(g['ji'])}")
-        self.dong.setText("")
-        self.bian.setText("")
-        self.yun.setText(f"整体运势：{g['yun']}")
-        self.shiye.setText(f"事业：{g['shiye']}")
-        self.ganqing.setText(f"感情：{g['ganqing']}")
-        self.caiyun.setText(f"财运：{g['caiyun']}")
+        self._render(g)
+        self._save_record()
+
+    # ---------- 记录 ----------
+    def _save_record(self):
+        """起卦/查卦结果自动保存到本地记录（不上传云端）。"""
+        r = self._result
+        if not r:
+            return
+        if "method" in r:  # 起卦结果
+            title = f"{r['ben_symbol']} {r['ben_gua']}卦 · {r['method']}"
+        else:              # 查卦结果
+            title = f"{r['symbol']} {r['name']}卦（第 {r['id']} 卦）"
+        records.add(
+            records.KIND_ZHOUYI,
+            title,
+            f"卦辞：{r['guaci'][:40]}　吉凶：{r['ji']}",
+            r,
+        )
+
+    def replay(self, r: dict):
+        """从历史记录复现卦象（不重复保存记录）。"""
+        if not r or "guaci" not in r:
+            return
+        self._result = r
+        self._render(r)
 
     # ---------- 渲染 ----------
     def _render(self, r: dict):
+        if "method" not in r:
+            # 查卦结果（get_gua 原始结构）：归一化为起卦渲染结构
+            r = dict(r)
+            r["ben_symbol"] = r["symbol"]
+            r["ben_gua"] = r["name"]
+            r["ben_upper"] = r.get("upper", "")
+            r["ben_lower"] = r.get("lower", "")
+            r["ben_upper_symbol"] = r.get("upper_symbol") or r.get("upper", "")
+            r["ben_lower_symbol"] = r.get("lower_symbol") or r.get("lower", "")
+            r["ben_wuxing"] = r.get("wuxing", "")
+            r["dong_yao"] = None
+            r["bian_gua"] = None
+            r.setdefault("time_note", "")
+            r["method"] = "查卦"
+
         self.title.setText(f"{r['ben_symbol']} {r['ben_gua']}卦 · {r['method']}")
         self.subtitle.setText(r.get("time_note", ""))
         self.ben.setText(
@@ -150,7 +184,8 @@ class ZhouyiPage(QWidget):
             f"（{r['ben_upper']}/{r['ben_lower']}） · 五行属{r['ben_wuxing']}")
         self.guaci.setText(f"卦辞：{r['guaci']}")
         self.ji.setText(f"吉凶：{r['ji']}")
-        self.ji.setStyleSheet(f"font-size: 17px; font-weight: bold; {theme.grade_qss(r['ji'])}")
+        self.ji.setStyleSheet(
+            f"font-size: {theme.fs(17)}px; font-weight: bold; {theme.grade_qss(r['ji'])}")
 
         if "coins" in r:
             # 铜钱法：逐爻展示

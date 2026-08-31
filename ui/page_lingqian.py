@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (QHBoxLayout, QLabel, QSpinBox, QVBoxLayout, QWidget
 from algorithm import lingqian
 from ui import theme
 from ui.widgets import Card, Divider, GhostButton, MutedLabel, PageTitle, PrimaryButton, SectionTitle
+from utils import records
 from utils.clipboard import copy_text
 
 
@@ -48,16 +49,18 @@ class LingqianPage(QWidget):
         body = self.card.body()
         self.title = QLabel("点击「求签」抽取一支灵签")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {theme.ACCENT};")
+        self.title.setStyleSheet(
+            f"font-size: {theme.fs(24)}px; font-weight: bold; color: {theme.ACCENT};")
         body.addWidget(self.title)
         self.grade = QLabel("")
         self.grade.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.grade.setStyleSheet(f"font-size: 16px; color: {theme.WARN};")
+        self.grade.setStyleSheet(f"font-size: {theme.fs(16)}px; color: {theme.WARN};")
         body.addWidget(self.grade)
         self.poem = QLabel("")
         self.poem.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.poem.setWordWrap(True)
-        self.poem.setStyleSheet(f"font-size: 17px; line-height: 1.7; color: {theme.INK};")
+        self.poem.setStyleSheet(
+            f"font-size: {theme.fs(17)}px; line-height: 1.7; color: {theme.INK};")
         body.addWidget(self.poem)
         body.addWidget(Divider())
         self.jie = MutedLabel("")
@@ -81,14 +84,32 @@ class LingqianPage(QWidget):
         except ValueError as e:
             self.title.setText(str(e))
             return
+        self._render(self._result)
+        # 本地自动保存记录（不上传云端）
         r = self._result
+        records.add(
+            records.KIND_LINGQIAN,
+            f"第 {r['number']} 签 · {r['title']}（{r['grade']}）",
+            f"签诗：{r['poem'][0]}…　解曰：{r['jie'][:36]}",
+            r,
+        )
+
+    def _render(self, r: dict):
         self.title.setText(f"第 {r['number']} 签 · {r['title']}")
         self.grade.setText(f"【{r['grade']}】")
-        self.grade.setStyleSheet(f"font-size: 18px; font-weight: bold; {theme.grade_qss(r['grade'])}")
+        self.grade.setStyleSheet(
+            f"font-size: {theme.fs(18)}px; font-weight: bold; {theme.grade_qss(r['grade'])}")
         self.poem.setText("\n".join(r["poem"]))
         self.jie.setText(f"解曰：{r['jie']}")
         self.diangu.setText(f"典故：{r['diangu']}")
         self.yunshi.setText(f"运势：{r['yunshi']}")
+
+    def replay(self, r: dict):
+        """从历史记录复现签文（不重复保存记录）。"""
+        if not r or "number" not in r:
+            return
+        self._result = r
+        self._render(r)
 
     def last_result(self) -> dict | None:
         """最近一次求签结果（供主窗口组装 AI 提示词）。"""

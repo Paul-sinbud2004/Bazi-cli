@@ -50,13 +50,15 @@ class BaziPage(QWidget):
             c = Card(padding=14)
             c._pname = QLabel(name)
             c._pname.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            c._pname.setStyleSheet(f"font-size: 14px; color: {theme.INK_SOFT};")
+            c._pname.setStyleSheet(f"font-size: {theme.fs(14)}px; color: {theme.INK_SOFT};")
             c._gan = QLabel("—")
             c._gan.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            c._gan.setStyleSheet(f"font-size: 30px; font-weight: bold; color: {theme.ACCENT};")
+            c._gan.setStyleSheet(
+                f"font-size: {theme.fs(30)}px; font-weight: bold; color: {theme.ACCENT};")
             c._zhi = QLabel("—")
             c._zhi.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            c._zhi.setStyleSheet(f"font-size: 30px; font-weight: bold; color: {theme.INK};")
+            c._zhi.setStyleSheet(
+                f"font-size: {theme.fs(30)}px; font-weight: bold; color: {theme.INK};")
             c._ss = QLabel("")
             c._ss.setAlignment(Qt.AlignmentFlag.AlignCenter)
             c._ss.setObjectName("muted")
@@ -66,7 +68,7 @@ class BaziPage(QWidget):
             c._cang.setObjectName("muted")
             c._nayin = QLabel("")
             c._nayin.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            c._nayin.setStyleSheet(f"font-size: 13px; color: {theme.GOLD};")
+            c._nayin.setStyleSheet(f"font-size: {theme.fs(13)}px; color: {theme.GOLD};")
             for w in (c._pname, c._gan, c._ss, c._zhi, c._cang, c._nayin):
                 c.body().addWidget(w)
             self.pillar_cards.append(c)
@@ -106,10 +108,10 @@ class BaziPage(QWidget):
             c = self.pillar_cards[i]
             c._gan.setText(col["gan"] + f"\n{col['shishen']}")
             c._gan.setStyleSheet(
-                f"font-size: 24px; font-weight: bold; {theme.wuxing_qss(col['gan_wuxing'])}")
+                f"font-size: {theme.fs(24)}px; font-weight: bold; {theme.wuxing_qss(col['gan_wuxing'])}")
             c._zhi.setText(col["zhi"])
             c._zhi.setStyleSheet(
-                f"font-size: 26px; font-weight: bold; {theme.wuxing_qss(col['zhi_wuxing'])}")
+                f"font-size: {theme.fs(26)}px; font-weight: bold; {theme.wuxing_qss(col['zhi_wuxing'])}")
             c._cang.setText("藏干 " + "、".join(
                 f"{x['gan']}({x['shishen']})" for x in col["canggan"]))
             c._nayin.setText(col["nayin"])

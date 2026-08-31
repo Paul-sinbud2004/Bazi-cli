@@ -157,3 +157,34 @@ class InputPage(QWidget):
         }
         cfg.save_profile(profile)
         self.profile_changed.emit(profile)
+
+    def fill_profile(self, profile: dict):
+        """从历史记录一键回填所有个人信息（不触发排盘）。"""
+        if not profile:
+            return
+        if profile.get("name") is not None:
+            self.name_edit.setText(str(profile.get("name", "")))
+        if profile.get("gender"):
+            self.gender_combo.setCurrentText(str(profile["gender"]))
+        d = str(profile.get("solar_date", ""))
+        if d:
+            qd = QDate.fromString(d, "yyyy-MM-dd")
+            if qd.isValid():
+                self.date_edit.setDate(qd)
+        t = str(profile.get("solar_time", ""))
+        if t:
+            qt = QTime.fromString(t, "HH:mm")
+            if qt.isValid():
+                self.time_edit.setTime(qt)
+        if profile.get("longitude") is not None:
+            try:
+                self.lon_spin.setValue(float(profile["longitude"]))
+            except (TypeError, ValueError):
+                pass
+        self.ts_check.setChecked(bool(profile.get("use_true_solar", False)))
+        mode = profile.get("leap_month_mode")
+        if mode:
+            idx = self.leap_combo.findData(mode)
+            if idx >= 0:
+                self.leap_combo.setCurrentIndex(idx)
+        self._refresh_true_solar()

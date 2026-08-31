@@ -3,6 +3,12 @@
 古风主题（宣纸白 / 墨黑 / 赭石红 / 暗黄）
 =========================================
 全局配色、字体与 QSS。所有页面共用，保证风格统一。
+
+字体策略（v2.1.0）：
+  - 不再硬编码固定中文字体；由 utils.fontman 探测系统优质中文字体或用户自选；
+  - BASE_SIZE 为设计基准字号（14px），fs(px) 按用户字号等比缩放，
+    页面内联样式的 font-size 一律经 theme.fs() 换算，实现全局自适应；
+  - rebuild_qss() 在字体/字号变化时重建 QSS，由主窗口重新应用并重建页面。
 """
 from __future__ import annotations
 
@@ -22,19 +28,49 @@ OK        = "#3E6B4F"   # 吉（墨绿）
 WARN      = "#B08D2E"   # 中（暗黄）
 BAD       = "#8C3A2B"   # 凶（赭石红）
 
-# ---------- 字体 ----------
-# 优先使用系统古风衬线字体，缺失时回退。
-FONT_FAMILY = ("\"Noto Serif CJK SC\", \"Source Han Serif SC\", \"Source Han Serif CN\", "
-               "\"STZhongsong\", \"STSong\", \"KaiTi\", \"STKaiti\", \"SimSun\", serif")
-
 # 四柱用色（金木水火土）
 WUXING_COLOR = {"金": "#A67C2E", "木": "#3E6B4F", "水": "#2F5D7A",
                 "火": "#8C3A2B", "土": "#7A6A45"}
 
-QSS = f"""
+# ---------- 字体（动态） ----------
+# 当前生效的字体族与字号（rebuild_font() 时刷新；"" 表示跟随系统默认）
+FONT_FAMILY = ""
+FONT_SIZE = 14
+BASE_SIZE = 14  # 设计基准字号（px）
+
+# 兼容旧引用：旧代码可能读取 theme.FONT_FAMILY 作为字体族字符串
+_FONT_FALLBACK = ("\"Noto Serif CJK SC\", \"Source Han Serif SC\", \"Source Han Serif CN\", "
+                  "\"STZhongsong\", \"STSong\", \"KaiTi\", \"STKaiti\", \"SimSun\", serif")
+
+
+def rebuild_font() -> tuple[str, int]:
+    """从配置读取字体设置并刷新本模块状态。返回 (family, size)。"""
+    global FONT_FAMILY, FONT_SIZE
+    from utils.fontman import load_font_config
+    FONT_FAMILY, FONT_SIZE = load_font_config()
+    return FONT_FAMILY, FONT_SIZE
+
+
+def fs(px: float) -> int:
+    """设计字号 → 当前字号等比缩放（最小 9px）。"""
+    scale = FONT_SIZE / BASE_SIZE
+    return max(9, round(px * scale))
+
+
+def font_family_css() -> str:
+    """字体族 QSS 片段：自选字体用引号包裹；空则回退优先级列表（跟随系统渲染）。"""
+    if FONT_FAMILY:
+        return f"\"{FONT_FAMILY}\""
+    return _FONT_FALLBACK
+
+
+# ---------- QSS（动态重建） ----------
+def _build_qss() -> str:
+    fam = font_family_css()
+    return f"""
 * {{
-    font-family: {FONT_FAMILY};
-    font-size: 14px;
+    font-family: {fam};
+    font-size: {fs(14)}px;
     color: {INK};
 }}
 QMainWindow, QWidget#root {{
@@ -44,25 +80,25 @@ QLabel {{
     background: transparent;
 }}
 QLabel#appTitle {{
-    font-size: 26px;
+    font-size: {fs(26)}px;
     font-weight: bold;
     color: {ACCENT};
     letter-spacing: 6px;
 }}
 QLabel#appSub {{
-    font-size: 13px;
+    font-size: {fs(13)}px;
     color: {INK_SOFT};
     letter-spacing: 2px;
 }}
 QLabel#pageTitle {{
-    font-size: 20px;
+    font-size: {fs(20)}px;
     font-weight: bold;
     color: {ACCENT};
     padding-left: 10px;
     border-left: 4px solid {GOLD};
 }}
 QLabel#sectionTitle {{
-    font-size: 16px;
+    font-size: {fs(16)}px;
     font-weight: bold;
     color: {INK};
     padding-left: 8px;
@@ -70,7 +106,7 @@ QLabel#sectionTitle {{
 }}
 QLabel#muted {{
     color: {INK_SOFT};
-    font-size: 13px;
+    font-size: {fs(13)}px;
 }}
 QPushButton {{
     background-color: {CARD};
@@ -78,7 +114,7 @@ QPushButton {{
     border-radius: 6px;
     padding: 7px 18px;
     color: {ACCENT};
-    font-size: 14px;
+    font-size: {fs(14)}px;
 }}
 QPushButton:hover {{
     background-color: {GOLD_SOFT};
@@ -103,7 +139,7 @@ QPushButton#nav {{
     border-radius: 0;
     text-align: left;
     padding: 12px 18px;
-    font-size: 15px;
+    font-size: {fs(15)}px;
     color: {INK_SOFT};
 }}
 QPushButton#nav:hover {{
@@ -206,8 +242,22 @@ QTextEdit, QPlainTextEdit {{
     color: {INK};
     selection-background-color: {GOLD_SOFT};
 }}
-QMessageBox {{
+QMessageBox, QDialog {{
     background-color: {CARD};
+}}
+QListWidget {{
+    background-color: {CARD};
+    border: 1px solid {CARD_BORDER};
+    border-radius: 6px;
+    selection-background-color: {GOLD_SOFT};
+    selection-color: {INK};
+}}
+QListWidget::item {{
+    padding: 10px 12px;
+    border-bottom: 1px solid {LINE};
+}}
+QListWidget::item:selected {{
+    background-color: {GOLD_SOFT};
 }}
 QToolTip {{
     background-color: {CARD};
@@ -216,6 +266,21 @@ QToolTip {{
     padding: 4px;
 }}
 """
+
+
+def rebuild_qss() -> str:
+    """字体设置变化后调用：刷新字体状态并重建 QSS。"""
+    rebuild_font()
+    global QSS
+    QSS = _build_qss()
+    return QSS
+
+
+# 模块加载时初始化（无 QApplication 环境下安全降级）
+try:
+    QSS = rebuild_qss()
+except Exception:  # noqa: BLE001
+    QSS = _build_qss()
 
 
 def wuxing_qss(wx: str) -> str:

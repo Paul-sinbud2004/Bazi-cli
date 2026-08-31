@@ -105,7 +105,8 @@ class PalaceCell(QFrame):
         lay.setContentsMargins(10, 8, 10, 8)
         lay.setSpacing(3)
         self.name = QLabel("")
-        self.name.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {theme.ACCENT};")
+        self.name.setStyleSheet(
+            f"font-size: {theme.fs(15)}px; font-weight: bold; color: {theme.ACCENT};")
         self.gz = QLabel("")
         self.gz.setObjectName("muted")
         self.major = QLabel("")
@@ -114,7 +115,7 @@ class PalaceCell(QFrame):
         self.minor.setObjectName("muted")
         self.minor.setWordWrap(True)
         self.dayun = QLabel("")
-        self.dayun.setStyleSheet(f"font-size: 12px; color: {theme.GOLD};")
+        self.dayun.setStyleSheet(f"font-size: {theme.fs(12)}px; color: {theme.GOLD};")
         lay.addWidget(self.name)
         lay.addWidget(self.gz)
         lay.addWidget(self.major)
